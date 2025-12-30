@@ -1,0 +1,32 @@
+services:
+  api:
+    build: .
+    depends_on:
+      - db
+    environment:
+      DB_HOST: db
+    ports:
+      - "8000:8000"
+    networks:
+      - backend
+
+  db:
+    image: postgres:16-alpine
+    volumes:
+      - data:/var/lib/postgresql/data
+    networks:
+      backend:
+        aliases:
+          - db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 2
+
+volumes:
+  data:
+
+networks:
+  backend:
+    driver: bridge

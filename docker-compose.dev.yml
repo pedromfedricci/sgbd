@@ -1,0 +1,10 @@
+services:
+  api:
+    env_file:
+      - .env.dev
+
+  db:
+    ports:
+      - "127.0.0.1:${DB_PORT}:${DB_PORT}/tcp"
+    env_file:
+      - .env.dev
