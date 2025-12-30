@@ -32,6 +32,7 @@ utilizando Python, FastAPI, PostgreSQL, SQLAlchemy (async) e Alembic.
 
 ## Organização
 
+```text
 app/
 ├── api/            # Camada HTTP (FastAPI routers)
 ├── db/
@@ -44,6 +45,7 @@ app/
 ├── schemas/        # Schemas Pydantic (request/response)
 ├── deps.py         # Injeção de dependências
 └── main.py         # Inicialização da aplicação
+```
 
 ## Ambiente de desenvolvimento
 
@@ -92,3 +94,6 @@ A documentação OpenAPI é gerada automaticamente pelo FastAPI e pode ser acess
 
 - Swagger: http://localhost:8000/docs
 - OpenAPI: http://localhost:8000/openapi.json
+
+
+
