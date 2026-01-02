@@ -33,7 +33,7 @@ services:
       retries: 2
 
   jaeger:
-    image: jaegertracing/jaeger:2
+    image: jaegertracing/jaeger
     networks:
       backend:
         aliases:
