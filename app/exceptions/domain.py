@@ -26,11 +26,11 @@ class BookAlreadyLoaned(AppException):
 
 
 class LoanNotFound(AppException):
-    code: str = "laon_not_found"
+    code: str = "loan_not_found"
 
 
 class LoanAlreadyReturned(AppException):
-    code: str = "loand_already_returned"
+    code: str = "loan_already_returned"
 
 
 class MaxActiveLoansExceeded(AppException):

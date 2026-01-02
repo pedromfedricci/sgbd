@@ -1,11 +1,6 @@
 from app.services.loan import LoanService
 from app.api.dependencies import loan_service
-
-from app.schemas.loan import (
-    LoanCreate,
-    LoanReturn,
-    LoanResponse,
-)
+from app.schemas.loan import LoanCreate, LoanResponse
 
 from fastapi import APIRouter, status
 
@@ -37,5 +32,5 @@ async def list_overdue_loans(
 
 
 @router.post("/{loan_id}/return", response_model=LoanResponse)
-async def return_loan(loan: LoanReturn, loans: LoanService = loan_service()):
-    return await loans.fulfill(loan.id)
+async def return_loan(loan_id: int, loans: LoanService = loan_service()):
+    return await loans.fulfill(loan_id)

@@ -1,8 +1,11 @@
 from app.exceptions.domain import (
     AppException,
     EmailAlreadyRegistered,
+    LoanAlreadyReturned,
+    LoanNotFound,
     UserNotFound,
     BookNotFound,
+    BookAlreadyLoaned,
     MaxActiveLoansExceeded,
 )
 
@@ -16,8 +19,11 @@ logger = structlog.get_logger("sgbd.api.exceptions")
 ERROR_MAP = {
     UserNotFound: (status.HTTP_404_NOT_FOUND, "User not found"),
     BookNotFound: (status.HTTP_404_NOT_FOUND, "Book not found"),
+    LoanNotFound: (status.HTTP_404_NOT_FOUND, "Loan not found"),
+    BookAlreadyLoaned: (status.HTTP_409_CONFLICT, "Book already loaned"),
     EmailAlreadyRegistered: (status.HTTP_409_CONFLICT, "Email already registered"),
-    MaxActiveLoansExceeded: (status.HTTP_409_CONFLICT, "Loan limit reached"),
+    LoanAlreadyReturned: (status.HTTP_409_CONFLICT, "Loan already returned"),
+    MaxActiveLoansExceeded: (status.HTTP_409_CONFLICT, "Max active loans exceeded"),
 }
 
 UNKNOWN_ERROR: tuple[int, str] = (

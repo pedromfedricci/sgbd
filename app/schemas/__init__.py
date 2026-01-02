@@ -1,6 +1,6 @@
 from .user import UserCreate, UserResponse
 from .book import BookCreate, BookResponse
-from .loan import LoanCreate, LoanResponse, LoanReturn
+from .loan import LoanCreate, LoanResponse
 
 __all__ = [
     "UserCreate",
@@ -8,6 +8,5 @@ __all__ = [
     "BookCreate",
     "BookResponse",
     "LoanCreate",
-    "LoanReturn",
     "LoanResponse",
 ]
