@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, Asyn
 from typing import AsyncGenerator
 
 engine = create_async_engine(database_url_async(), echo=True, future=True)
-SQLAlchemyInstrumentor().instrument(engine=engine)
+SQLAlchemyInstrumentor().instrument(engine=engine.sync_engine)
 AsyncSessionLocal = async_sessionmaker(bind=engine, expire_on_commit=False)
 
 
