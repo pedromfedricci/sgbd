@@ -3,7 +3,12 @@ from app.db.models.loan import Loan
 from app.exceptions.domain import EmailAlreadyRegistered, UserNotFound
 from app.repositories.user import UserRepository
 
+import structlog
+from opentelemetry import trace
 from typing import Sequence
+
+logger = structlog.get_logger("sgbd.services.user")
+tracer = trace.get_tracer("sgbd.services.user")
 
 
 class UserService:
@@ -11,29 +16,57 @@ class UserService:
         self.users = users
 
     async def list_all(self, *, offset: int, limit: int) -> Sequence[User]:
-        return await self.users.list(offset=offset, limit=limit)
+        with tracer.start_as_current_span("UserService.list_all") as span:
+            span.set_attribute("offset", offset)
+            span.set_attribute("limit", limit)
+            users = await self.users.list(offset=offset, limit=limit)
+            span.set_attribute("result_count", len(users))
+            return users
 
     async def create(self, *, name: str, email: str) -> User:
-        user = await self.users.get_by_email(email)
+        with tracer.start_as_current_span("UserService.create") as span:
+            span.set_attribute("email", email)
 
-        if user:
-            raise EmailAlreadyRegistered(email=email)
+            user = await self.users.get_by_email(email)
 
-        user = User(name=name, email=email)
-        return await self.users.create(user)
+            if user:
+                logger.warning("user_creation_failed", reason="email_registered", email=email)
+                raise EmailAlreadyRegistered(email=email)
+
+            user = User(name=name, email=email)
+            created = await self.users.create(user)
+
+            structlog.contextvars.bind_contextvars(user_id=created.id)
+            span.set_attribute("user_id", created.id)
+            logger.info("user_created", user_id=created.id, email=email)
+            return created
 
     async def get_by_id(self, user_id: int) -> User:
-        user = await self.users.get_by_id(user_id)
+        structlog.contextvars.bind_contextvars(user_id=user_id)
 
-        if not user:
-            raise UserNotFound(user_id=user_id)
+        with tracer.start_as_current_span("UserService.get_by_id") as span:
+            span.set_attribute("user_id", user_id)
 
-        return user
+            user = await self.users.get_by_id(user_id)
+
+            if not user:
+                logger.warning("user_not_found", user_id=user_id)
+                raise UserNotFound(user_id=user_id)
+
+            return user
 
     async def get_loans(self, user_id: int) -> Sequence[Loan]:
-        user = await self.get_by_id(user_id)
+        structlog.contextvars.bind_contextvars(user_id=user_id)
 
-        if not user:
-            raise UserNotFound(user_id=user_id)
+        with tracer.start_as_current_span("UserService.get_loans") as span:
+            span.set_attribute("user_id", user_id)
 
-        return await self.users.get_loans(user_id)
+            user = await self.users.get_by_id(user_id)
+
+            if not user:
+                logger.warning("user_not_found", user_id=user_id)
+                raise UserNotFound(user_id=user_id)
+
+            loans = await self.users.get_loans(user_id)
+            span.set_attribute("loan_count", len(loans))
+            return loans

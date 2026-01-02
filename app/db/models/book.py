@@ -2,7 +2,6 @@ from app.db.base import Base
 
 from sqlalchemy import Index, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.ext.indexable import index_property
 
 
 class Book(Base):
@@ -14,7 +13,5 @@ class Book(Base):
     isbn: Mapped[str | None] = mapped_column(String(20), unique=True, nullable=True)
 
     loans = relationship("Loan", back_populates="book", cascade="all, delete-orphan")
-
-    index_property("title", "ix_book_title")
 
     __table_args__ = (Index("ix_book_title", "title"),)

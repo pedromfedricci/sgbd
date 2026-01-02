@@ -20,7 +20,7 @@ class BookRepository:
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
-    async def list(self, *, offset: int, limit: int) -> Sequence[Book]:
+    async def list_all(self, *, offset: int, limit: int) -> Sequence[Book]:
         order_by = select(Book).order_by(Book.id)
         stmt = order_by.offset(offset).limit(limit)
         result = await self.session.execute(stmt)

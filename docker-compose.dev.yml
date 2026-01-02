@@ -8,3 +8,7 @@ services:
       - "127.0.0.1:${DB_PORT}:${DB_PORT}/tcp"
     env_file:
       - .env.dev
+
+  jaeger:
+    ports:
+      - "127.0.0.1:${JAEGER_UI_PORT}:${JAEGER_UI_PORT}/tcp"

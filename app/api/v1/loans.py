@@ -1,5 +1,5 @@
 from app.services.loan import LoanService
-from app.api.deps import loan_service
+from app.api.dependencies import loan_service
 
 from app.schemas.loan import (
     LoanCreate,

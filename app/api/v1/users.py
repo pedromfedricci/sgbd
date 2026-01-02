@@ -1,4 +1,4 @@
-from app.api.deps.user import user_service
+from app.api.dependencies.user import user_service
 from app.services.user import UserService
 from app.schemas.user import UserCreate, UserResponse
 from app.schemas.loan import LoanResponse

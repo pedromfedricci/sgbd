@@ -1,4 +1,4 @@
-from app.api.deps.book import book_service
+from app.api.dependencies import book_service
 from app.schemas.book import BookCreate, BookResponse
 from app.services.book import BookService
 
@@ -17,7 +17,7 @@ async def list_books(
 
 @router.get("/{book_id}", response_model=BookResponse)
 async def get_book(book_id: int, books: BookService = book_service()):
-    return await books.get_by_id(book_id)
+    return await books.get_by_id(book_id=book_id)
 
 
 @router.post("", response_model=BookResponse, status_code=status.HTTP_201_CREATED)
