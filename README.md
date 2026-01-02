@@ -79,11 +79,11 @@ HTTP Request
 
 Exemplo: `POST /loans` (criar empréstimo)
 
-1. **Router** valida request body com Pydantic
-2. **Dependency Injection** injeta `LoanService` com repositórios
-3. **Service** aplica regras: usuário existe? livro existe? < 3 empréstimos ativos?
-4. **Repository** persiste no banco
-5. **Response** serializada e retornada
+1. **Router**: valida request body com Pydantic
+2. **Dependency Injection**: injeta `LoanService` com repositórios
+3. **Service**: aplica regras: usuário existe? livro existe? < 3 empréstimos ativos?
+4. **Repository**: persiste no banco
+5. **Response**: serializada e retornada
 
 ## Requisitos Não Funcionais Implementados
 
@@ -93,6 +93,11 @@ Exemplo: `POST /loans` (criar empréstimo)
 - [x] Documentação automática com Swagger/OpenAPI
 - [x] Validação robusta com Pydantic
 - [x] Logging estruturado de operações
+
+## Intermediário
+
+- [x] Sistema de reserva de livros
+- [x] Testes automatizados (unitários + integração)
 
 ### Avançado
 
@@ -105,6 +110,7 @@ Exemplo: `POST /loans` (criar empréstimo)
 - Python
 - Uv
 - Docker e Compose
+- Hurl
 - Just (recomendado)
 - Direnv (recomendado)
 
@@ -221,3 +227,26 @@ just dev-up
 
 Acesse a UI do Jaeger em: http://localhost:16686
 
+## Testes
+
+### Estrutura
+
+```text
+tests/
+├── users.hurl # Testes E2E com Hurl
+├── books.hurl
+└── loans.hurl
+```
+
+### Executar testes E2E com Hurl
+
+```bash
+# Requer aplicação rodando (just dev-up)
+hurl --test tests/users.hurl
+hurl --test tests/books.hurl
+hurl --test tests/loans.hurl
+```
+
+**Notas**:
+
+- Testes E2E requerem a aplicação rodando, banco de dados limpo, e Hurl.
