@@ -33,6 +33,7 @@ COPY --from=builder /app/.venv ./.venv
 
 # Copy runtime dependencies
 COPY scripts/start.sh ./start.sh
+COPY scripts/healthcheck.py ./healthcheck
 COPY alembic.ini ./
 COPY alembic ./alembic
 COPY ./app ./app

@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 router = APIRouter(tags=["health"])
 
 
-@router.get("/health")
+@router.get("/health", include_in_schema=False)
 async def health(session: AsyncSession = get_db_async_session()):
     try:
         await session.execute(text("SELECT 1"))

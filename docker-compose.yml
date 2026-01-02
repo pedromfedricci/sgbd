@@ -2,8 +2,10 @@ services:
   api:
     build: .
     depends_on:
-      - db
-      - jaeger
+      db:
+        condition: service_healthy
+      jaeger:
+        condition: service_started
     environment:
       DB_HOST: db
       OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318
@@ -12,7 +14,7 @@ services:
     networks:
       - backend
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "./healthcheck"]
       interval: 30s
       timeout: 10s
       retries: 3
