@@ -3,6 +3,9 @@ set dotenv-load := false
 compose := "docker compose"
 files := "-f docker-compose.yml -f docker-compose.dev.yml"
 
+ps:
+    {{compose}} {{files}} ps
+
 dev-up:
     {{compose}} {{files}} up --detach -V
 
@@ -15,16 +18,19 @@ dev-up-build:
 dev-down:
     {{compose}} {{files}} down
 
-dev-down-db:
+dev-db-down:
     {{compose}} {{files}} down db
 
 dev-down-prune:
-    {{compose}} {{files}} down --volumes
+    {{compose}} {{files}} down --volumes --remove-orphans
 
-dev-logs-api:
+dev-db-prune:
+    {{compose}} {{files}} down --volumes --remove-orphans db
+
+dev-api-logs:
     {{compose}} {{files}} logs --follow api
 
-dev-logs-db:
+dev-db-logs:
     {{compose}} {{files}} logs --follow db
 
 dev-api-env:
@@ -32,3 +38,6 @@ dev-api-env:
 
 dev-api-bash:
     {{compose}} {{files}} run --rm api bash
+
+dev-db-psql:
+    {{compose}} {{files}} exec db psql -U sgbd -d sgbd

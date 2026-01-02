@@ -42,7 +42,7 @@ class BookService:
             span.set_attribute("author", author)
 
             book = Book(title=title, author=author)
-            created = await self.books.add(book)
+            created = await self.books.create(book)
 
             structlog.contextvars.bind_contextvars(book_id=created.id)
             span.set_attribute("book_id", created.id)

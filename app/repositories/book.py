@@ -26,7 +26,7 @@ class BookRepository:
         result = await self.session.execute(stmt)
         return result.scalars().all()
 
-    async def add(self, book: Book) -> Book:
+    async def create(self, book: Book) -> Book:
         self.session.add(book)
         await self.session.flush()
         return book

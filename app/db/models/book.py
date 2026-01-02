@@ -10,7 +10,6 @@ class Book(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String(200), nullable=False)
     author: Mapped[str] = mapped_column(String(200), nullable=False)
-    isbn: Mapped[str | None] = mapped_column(String(20), unique=True, nullable=True)
 
     loans = relationship("Loan", back_populates="book", cascade="all, delete-orphan")
 

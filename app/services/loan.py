@@ -79,7 +79,7 @@ class LoanService:
             loan = Loan(user_id=user_id, book_id=book_id, due_to=due_to)
 
             try:
-                created = await self.loans.add(loan)
+                created = await self.loans.create(loan)
                 span.set_attribute("loan_id", created.id)
                 logger.info(
                     "loan_created", loan_id=created.id, due_to=due_to.isoformat()
