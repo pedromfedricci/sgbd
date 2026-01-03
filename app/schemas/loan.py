@@ -1,16 +1,14 @@
 from datetime import datetime
-from pydantic import BaseModel
+
+from app.schemas.wire import WireModel
 
 
-class LoanCreate(BaseModel):
+class LoanCreate(WireModel):
     user_id: int
     book_id: int
 
-    class Config:
-        from_attributes = True
 
-
-class LoanResponse(BaseModel):
+class LoanResponse(WireModel):
     id: int
     book_id: int
     user_id: int
@@ -18,6 +16,3 @@ class LoanResponse(BaseModel):
     due_to: datetime
     returned_at: datetime | None
     fine_cents: int
-
-    class Config:
-        from_attributes = True

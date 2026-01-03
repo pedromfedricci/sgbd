@@ -1,18 +1,14 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import EmailStr
+
+from app.schemas.wire import WireModel
 
 
-class UserCreate(BaseModel):
+class UserCreate(WireModel):
     name: str
     email: EmailStr
 
-    class Config:
-        from_attributes = True
 
-
-class UserResponse(BaseModel):
+class UserResponse(WireModel):
     id: int
     name: str
     email: EmailStr
-
-    class Config:
-        from_attributes = True

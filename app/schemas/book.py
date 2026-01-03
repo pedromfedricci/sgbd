@@ -1,16 +1,12 @@
-from pydantic import BaseModel
+from app.schemas.wire import WireModel
 
 
-class BookCreate(BaseModel):
+class BookCreate(WireModel):
     title: str
     author: str
 
 
-class BookResponse(BaseModel):
+class BookResponse(WireModel):
     id: int
     title: str
     author: str
-
-    class Config:
-        from_attributes = True
-
