@@ -1,6 +1,6 @@
-from sqlalchemy.engine import URL
-
 import os
+
+from sqlalchemy.engine import URL
 
 
 def create_url(drivername: str) -> URL:

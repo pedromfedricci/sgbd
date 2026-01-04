@@ -1,9 +1,7 @@
-from app.api import health
-from app.api.v1 import users
-from app.api.v1 import books
-from app.api.v1 import loans
-
 from fastapi import APIRouter
+
+from app.api import health
+from app.api.v1 import books, loans, users
 
 router = APIRouter()
 

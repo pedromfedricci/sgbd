@@ -1,10 +1,11 @@
-from app.db.models.book import Book
-from app.repositories.book import BookRepository
-from app.exceptions.domain import BookNotFound
+from collections.abc import Sequence
 
 import structlog
 from opentelemetry import trace
-from typing import Sequence
+
+from app.db.models.book import Book
+from app.exceptions.domain import BookNotFound
+from app.repositories.book import BookRepository
 
 logger = structlog.get_logger("sgbd.services.book")
 tracer = trace.get_tracer("sgbd.services.book")

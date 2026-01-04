@@ -1,5 +1,6 @@
 from pydantic import BaseModel, ConfigDict
 
+
 class WireModel(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
@@ -10,4 +11,3 @@ class WireModel(BaseModel):
         str_strip_whitespace=True,
         use_enum_values=True,
     )
-

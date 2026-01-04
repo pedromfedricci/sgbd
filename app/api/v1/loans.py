@@ -1,8 +1,8 @@
-from app.services.loan import LoanService
+from fastapi import APIRouter, status
+
 from app.api.dependencies import loan_service
 from app.schemas.loan import LoanCreate, LoanResponse
-
-from fastapi import APIRouter, status
+from app.services.loan import LoanService
 
 router = APIRouter(prefix="/loans", tags=["loans"])
 

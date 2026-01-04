@@ -1,11 +1,12 @@
-from app.db.models.user import User
-from app.db.models.loan import Loan
-from app.exceptions.domain import EmailAlreadyRegistered, UserNotFound
-from app.repositories.user import UserRepository
+from collections.abc import Sequence
 
 import structlog
 from opentelemetry import trace
-from typing import Sequence
+
+from app.db.models.loan import Loan
+from app.db.models.user import User
+from app.exceptions.domain import EmailAlreadyRegistered, UserNotFound
+from app.repositories.user import UserRepository
 
 logger = structlog.get_logger("sgbd.services.user")
 tracer = trace.get_tracer("sgbd.services.user")
@@ -30,7 +31,9 @@ class UserService:
             user = await self.users.get_by_email(email)
 
             if user:
-                logger.warning("user_creation_failed", reason="email_registered", email=email)
+                logger.warning(
+                    "user_creation_failed", reason="email_registered", email=email
+                )
                 raise EmailAlreadyRegistered(email=email)
 
             user = User(name=name, email=email)

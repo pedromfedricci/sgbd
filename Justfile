@@ -3,11 +3,25 @@ set dotenv-load := false
 compose := "docker compose"
 files := "-f docker-compose.yml -f docker-compose.dev.yml"
 
+check:
+  uv run ruff check .
+
+format:
+  uv run ruff format .
+
+test:
+  uv run pytest
+
 ps:
     {{compose}} {{files}} ps
 
 dev-up:
     {{compose}} {{files}} up --detach -V
+
+dev-up-local:
+    {{compose}} {{files}} up --detach db jaeger
+    sleep 5
+    ./scripts/start.sh
 
 dev-up-db:
     {{compose}} {{files}} up --detach db

@@ -1,9 +1,9 @@
-from app.services.loan import LoanService
-from app.repositories import LoanRepository, UserRepository, BookRepository
-from app.api.dependencies.db import get_db_async_session
-
-from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.api.dependencies.db import get_db_async_session
+from app.repositories import BookRepository, LoanRepository, UserRepository
+from app.services.loan import LoanService
 
 
 def loan_service() -> LoanService:

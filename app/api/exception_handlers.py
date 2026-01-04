@@ -1,18 +1,17 @@
+import structlog
+from fastapi import Request, Response, status
+from fastapi.responses import JSONResponse
+
 from app.exceptions.domain import (
     AppException,
+    BookAlreadyLoaned,
+    BookNotFound,
     EmailAlreadyRegistered,
     LoanAlreadyReturned,
     LoanNotFound,
-    UserNotFound,
-    BookNotFound,
-    BookAlreadyLoaned,
     MaxActiveLoansExceeded,
+    UserNotFound,
 )
-
-import structlog
-from fastapi import Request, Response
-from fastapi.responses import JSONResponse
-from fastapi import status
 
 logger = structlog.get_logger("sgbd.api.exceptions")
 
@@ -36,11 +35,12 @@ def map_error(exc: AppException) -> tuple[int, str]:
     return ERROR_MAP.get(type(exc), UNKNOWN_ERROR)
 
 
-def app_exception_handler(_: Request, exc: AppException) -> Response:
+def app_exception_handler(_: Request, exc: Exception) -> Response:
+    assert isinstance(exc, AppException)
     status_code, detail = map_error(exc)
 
-    log_method = logger.warning if status_code < 500 else logger.error
-    log_method(
+    log = logger.warning if status_code < 500 else logger.error
+    log(
         "domain_exception",
         exception_type=type(exc).__name__,
         code=exc.code,

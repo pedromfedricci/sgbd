@@ -1,9 +1,9 @@
-from app.db.base import Base
-
 from datetime import datetime
-from sqlalchemy import ForeignKey, DateTime, Integer, func
+
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, Integer, func, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import text, Index, CheckConstraint
+
+from app.db.base import Base
 
 
 class Loan(Base):

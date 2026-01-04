@@ -1,9 +1,10 @@
-from app.db.models.book import Book
+from collections.abc import Sequence
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.expression import exists
-from typing import Sequence
+
+from app.db.models.book import Book
 
 
 class BookRepository:

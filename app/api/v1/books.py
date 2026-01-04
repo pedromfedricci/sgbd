@@ -1,9 +1,8 @@
+from fastapi import APIRouter, status
+
 from app.api.dependencies import book_service
 from app.schemas.book import BookCreate, BookResponse
 from app.services.book import BookService
-
-from fastapi import APIRouter, status
-
 
 router = APIRouter(prefix="/books", tags=["books"])
 

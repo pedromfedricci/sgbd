@@ -1,9 +1,9 @@
-from app.services.book import BookService
-from app.repositories.book import BookRepository
-from app.api.dependencies.db import get_db_async_session
-
-from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.api.dependencies.db import get_db_async_session
+from app.repositories.book import BookRepository
+from app.services.book import BookService
 
 
 def book_service() -> BookService:

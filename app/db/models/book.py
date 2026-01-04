@@ -1,7 +1,7 @@
-from app.db.base import Base
-
 from sqlalchemy import Index, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.db.base import Base
 
 
 class Book(Base):

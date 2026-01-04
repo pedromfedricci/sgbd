@@ -20,3 +20,51 @@ dependencies = [
   "opentelemetry-instrumentation-sqlalchemy>=0.60b1",
   "opentelemetry-exporter-otlp>=1.39.1",
 ]
+
+[project.optional-dependencies]
+test = [
+  "pytest>=9.0.2",
+  "pytest-asyncio>=0.24",
+  "pytest-cov>=6.0",
+  "httpx>=0.28",
+  "testcontainers[postgres]>=4.0",
+]
+
+[dependency-groups]
+lint = ["ruff>=0.8"]
+test = [
+  "pytest>=9.0.2",
+  "pytest-asyncio>=0.24",
+  "pytest-cov>=6.0",
+  "httpx>=0.28",
+  "testcontainers[postgres]>=4.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+filterwarnings = ["ignore::DeprecationWarning:testcontainers.*"]
+
+[tool.ruff]
+target-version = "py314"
+line-length = 88
+extend-exclude = ["alembic/versions"]
+
+[tool.ruff.lint]
+select = [
+  "E",     # pycodestyle errors
+  "W",     # pycodestyle warnings
+  "F",     # pyflakes
+  "I",     # isort
+  "B",     # flake8-bugbear
+  "UP",    # pyupgrade
+  "ASYNC", # flake8-async
+]
+ignore = [
+  "E501", # line too long (handled by formatter)
+  "B008", # function call in default argument (false positive for FastAPI Depends)
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]

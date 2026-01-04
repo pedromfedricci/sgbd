@@ -1,9 +1,9 @@
-from app.api.dependencies.user import user_service
-from app.services.user import UserService
-from app.schemas.user import UserCreate, UserResponse
-from app.schemas.loan import LoanResponse
-
 from fastapi import APIRouter, status
+
+from app.api.dependencies.user import user_service
+from app.schemas.loan import LoanResponse
+from app.schemas.user import UserCreate, UserResponse
+from app.services.user import UserService
 
 router = APIRouter(prefix="/users", tags=["users"])
 

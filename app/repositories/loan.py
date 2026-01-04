@@ -1,8 +1,9 @@
-from app.db.models.loan import Loan
-
-from sqlalchemy import select, func
-from sqlalchemy.ext.asyncio import AsyncSession
 from collections.abc import Sequence
+
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.db.models.loan import Loan
 
 
 class LoanRepository:

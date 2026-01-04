@@ -1,21 +1,22 @@
-from app.db.models.loan import Loan
-from app.repositories.book import BookRepository
-from app.repositories.loan import LoanRepository
-from app.repositories.user import UserRepository
-from app.exceptions.domain import (
-    UserNotFound,
-    BookNotFound,
-    LoanNotFound,
-    BookAlreadyLoaned,
-    MaxActiveLoansExceeded,
-    LoanAlreadyReturned,
-)
+from collections.abc import Sequence
+from datetime import UTC, datetime, timedelta
 
 import structlog
 from opentelemetry import trace
-from datetime import datetime, timezone, timedelta
 from sqlalchemy.exc import IntegrityError
-from typing import Sequence
+
+from app.db.models.loan import Loan
+from app.exceptions.domain import (
+    BookAlreadyLoaned,
+    BookNotFound,
+    LoanAlreadyReturned,
+    LoanNotFound,
+    MaxActiveLoansExceeded,
+    UserNotFound,
+)
+from app.repositories.book import BookRepository
+from app.repositories.loan import LoanRepository
+from app.repositories.user import UserRepository
 
 LOAN_DAYS: int = 14
 MAX_ACTIVE_LOANS: int = 3
@@ -74,7 +75,7 @@ class LoanService:
                 )
                 raise MaxActiveLoansExceeded(user_id=user_id, active=active)
 
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
             due_to = now + timedelta(days=LOAN_DAYS)
             loan = Loan(user_id=user_id, book_id=book_id, due_to=due_to)
 
@@ -111,7 +112,7 @@ class LoanService:
                 logger.warning("loan_return_failed", reason="already_returned")
                 raise LoanAlreadyReturned(loan_id=loan_id)
 
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
             loan.returned_at = now
 
             if now > loan.due_to:

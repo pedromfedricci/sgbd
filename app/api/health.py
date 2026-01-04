@@ -1,8 +1,8 @@
-from app.api.dependencies import get_db_async_session
-
 from fastapi import APIRouter, HTTPException
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.api.dependencies import get_db_async_session
 
 router = APIRouter(tags=["health"])
 
@@ -13,4 +13,4 @@ async def health(session: AsyncSession = get_db_async_session()):
         await session.execute(text("SELECT 1"))
         return {"status": "ok", "database": "ok"}
     except Exception:
-        raise HTTPException(status_code=503, detail="Database unavailable")
+        raise HTTPException(status_code=503, detail="Database unavailable") from None

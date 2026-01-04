@@ -1,10 +1,11 @@
-from app.db.models.user import User
-from app.db.models.loan import Loan
+from collections.abc import Sequence
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.expression import exists
-from collections.abc import Sequence
+
+from app.db.models.loan import Loan
+from app.db.models.user import User
 
 
 class UserRepository:
