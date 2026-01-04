@@ -1,6 +1,7 @@
 import logging
-import structlog
 import sys
+
+import structlog
 
 
 def configure_logging() -> None:

@@ -17,6 +17,9 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         self.logger = structlog.get_logger("sgbd.api.http")
 
     async def dispatch(self, request: Request, call_next) -> Response:
+        if request.url.path == "/health":
+            return await call_next(request)
+
         request_id = request.headers.get(REQUEST_ID_HEADER) or str(uuid.uuid4())
 
         structlog.contextvars.clear_contextvars()
