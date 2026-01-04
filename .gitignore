@@ -7,3 +7,5 @@ venv/
 dist/
 build/
 .direnv
+.coverage
+coverage.xml

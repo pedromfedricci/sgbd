@@ -6,11 +6,11 @@ from sqlalchemy.engine import URL
 def create_url(drivername: str) -> URL:
     return URL.create(
         drivername,
-        username=os.environ["DB_USER"],
-        password=os.environ["DB_PASSWORD"],
-        host=os.environ["DB_HOST"],
-        port=int(os.environ["DB_PORT"]),
-        database=os.environ["DB_NAME"],
+        username=os.environ.get("DB_USER", ""),
+        password=os.environ.get("DB_PASSWORD", ""),
+        host=os.environ.get("DB_HOST", ""),
+        port=int(os.environ.get("DB_PORT", "5432")),
+        database=os.environ.get("DB_NAME", ""),
     )
 
 
