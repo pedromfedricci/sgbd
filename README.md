@@ -233,9 +233,40 @@ Acesse a UI do Jaeger em: http://localhost:16686
 
 ```text
 tests/
-├── users.hurl # Testes E2E com Hurl
+├── unit/                      # Testes unitários (mocks)
+│   ├── test_user_service.py
+│   ├── test_book_service.py
+│   └── test_loan_service.py
+├── integration/               # Testes de integração (testcontainers)
+│   ├── conftest.py            # Fixtures (PostgresContainer, client)
+│   ├── test_users_api.py
+│   ├── test_books_api.py
+│   └── test_loans_api.py
+├── users.hurl                 # Testes E2E com Hurl
 ├── books.hurl
 └── loans.hurl
+```
+
+### Executar testes com pytest
+
+```bash
+# Instalar dependências de teste
+uv sync --extra test
+
+# Executar todos os testes
+pytest
+
+# Apenas testes unitários
+pytest tests/unit/
+
+# Apenas testes de integração
+pytest tests/integration/
+
+# Com cobertura
+pytest --cov=app --cov-report=html
+
+# Modo verbose
+pytest -v
 ```
 
 ### Executar testes E2E com Hurl
@@ -249,4 +280,5 @@ hurl --test tests/loans.hurl
 
 **Notas**:
 
+- Testes de integração usam testcontainers (Docker) e dependem da biblioteca padrão: `libstdc++`.
 - Testes E2E requerem a aplicação rodando, banco de dados limpo, e Hurl.
