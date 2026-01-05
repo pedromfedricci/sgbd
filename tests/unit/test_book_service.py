@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock
 import pytest
 
 from app.db.models.book import Book
-from app.exceptions.domain import BookNotFound
+from app.exceptions.domain import BookAlreadyExists, BookNotFound
 from app.services.book import BookService
 
 
@@ -19,6 +19,7 @@ def book_service(mock_book_repo):
 
 class TestBookServiceCreate:
     async def test_create_success(self, book_service, mock_book_repo):
+        mock_book_repo.get_by_title_and_author.return_value = None
         mock_book_repo.create.return_value = Book(
             id=1, title="Dom Casmurro", author="Machado de Assis"
         )
@@ -31,6 +32,18 @@ class TestBookServiceCreate:
         assert result.title == "Dom Casmurro"
         assert result.author == "Machado de Assis"
         mock_book_repo.create.assert_called_once()
+
+    async def test_create_duplicate_book(self, book_service, mock_book_repo):
+        mock_book_repo.get_by_title_and_author.return_value = Book(
+            id=1, title="Dom Casmurro", author="Machado de Assis"
+        )
+
+        with pytest.raises(BookAlreadyExists) as exc_info:
+            await book_service.create(title="Dom Casmurro", author="Machado de Assis")
+
+        assert exc_info.value.context["title"] == "Dom Casmurro"
+        assert exc_info.value.context["author"] == "Machado de Assis"
+        mock_book_repo.create.assert_not_called()
 
 
 class TestBookServiceGetById:

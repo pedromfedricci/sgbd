@@ -4,7 +4,7 @@ import structlog
 from opentelemetry import trace
 
 from app.db.models.book import Book
-from app.exceptions.domain import BookNotFound
+from app.exceptions.domain import BookAlreadyExists, BookNotFound
 from app.repositories.book import BookRepository
 
 logger = structlog.get_logger("sgbd.services.book")
@@ -41,6 +41,16 @@ class BookService:
         with tracer.start_as_current_span("BookService.create") as span:
             span.set_attribute("title", title)
             span.set_attribute("author", author)
+
+            existing = await self.books.get_by_title_and_author(title, author)
+            if existing:
+                logger.warning(
+                    "book_creation_failed",
+                    reason="book_already_exists",
+                    title=title,
+                    author=author,
+                )
+                raise BookAlreadyExists(title=title, author=author)
 
             book = Book(title=title, author=author)
             created = await self.books.create(book)

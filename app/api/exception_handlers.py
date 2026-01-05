@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 
 from app.exceptions.domain import (
     AppException,
+    BookAlreadyExists,
     BookAlreadyLoaned,
     BookNotFound,
     EmailAlreadyRegistered,
@@ -19,6 +20,7 @@ ERROR_MAP = {
     UserNotFound: (status.HTTP_404_NOT_FOUND, "User not found"),
     BookNotFound: (status.HTTP_404_NOT_FOUND, "Book not found"),
     LoanNotFound: (status.HTTP_404_NOT_FOUND, "Loan not found"),
+    BookAlreadyExists: (status.HTTP_409_CONFLICT, "Book already exists"),
     BookAlreadyLoaned: (status.HTTP_409_CONFLICT, "Book already loaned"),
     EmailAlreadyRegistered: (status.HTTP_409_CONFLICT, "Email already registered"),
     LoanAlreadyReturned: (status.HTTP_409_CONFLICT, "Loan already returned"),

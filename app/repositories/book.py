@@ -21,6 +21,11 @@ class BookRepository:
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
+    async def get_by_title_and_author(self, title: str, author: str) -> Book | None:
+        stmt = select(Book).where(Book.title == title, Book.author == author)
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
+
     async def list_all(self, *, offset: int, limit: int) -> Sequence[Book]:
         order_by = select(Book).order_by(Book.id)
         stmt = order_by.offset(offset).limit(limit)

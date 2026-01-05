@@ -1,4 +1,4 @@
-from sqlalchemy import Index, String
+from sqlalchemy import Index, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -13,4 +13,7 @@ class Book(Base):
 
     loans = relationship("Loan", back_populates="book", cascade="all, delete-orphan")
 
-    __table_args__ = (Index("ix_book_title", "title"),)
+    __table_args__ = (
+        Index("ix_book_title", "title"),
+        UniqueConstraint("title", "author", name="uq_book_title_author"),
+    )

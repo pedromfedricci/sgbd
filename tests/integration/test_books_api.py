@@ -11,6 +11,33 @@ class TestCreateBook:
         assert data["author"] == "Machado de Assis"
         assert "id" in data
 
+    async def test_create_book_duplicate_title_and_author(self, client):
+        await client.post(
+            "/books",
+            json={"title": "Duplicate Book", "author": "Same Author"},
+        )
+
+        response = await client.post(
+            "/books",
+            json={"title": "Duplicate Book", "author": "Same Author"},
+        )
+
+        assert response.status_code == 409
+        assert response.json()["code"] == "book_already_exists"
+
+    async def test_create_book_same_title_different_author(self, client):
+        await client.post(
+            "/books",
+            json={"title": "Common Title", "author": "Author One"},
+        )
+
+        response = await client.post(
+            "/books",
+            json={"title": "Common Title", "author": "Author Two"},
+        )
+
+        assert response.status_code == 201
+
     async def test_create_book_missing_title(self, client):
         response = await client.post(
             "/books",

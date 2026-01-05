@@ -1,6 +1,13 @@
+from collections.abc import AsyncGenerator, Generator
+
 import pytest
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 from testcontainers.postgres import PostgresContainer
 
 import app.db.models  # noqa: F401 - registers models with Base.metadata
@@ -9,13 +16,13 @@ from app.db.session import get_db_async_session
 
 
 @pytest.fixture(scope="session")
-def postgres():
+def postgres() -> Generator[PostgresContainer]:
     with PostgresContainer("postgres:16-alpine") as pg:
         yield pg
 
 
 @pytest.fixture
-async def engine(postgres):
+async def engine(postgres: PostgresContainer) -> AsyncGenerator[AsyncEngine]:
     url = postgres.get_connection_url().replace("psycopg2", "asyncpg")
     engine = create_async_engine(url, echo=False)
 
@@ -31,7 +38,7 @@ async def engine(postgres):
 
 
 @pytest.fixture
-async def db_session(engine):
+async def db_session(engine: AsyncEngine) -> AsyncGenerator[AsyncSession]:
     session_factory = async_sessionmaker(bind=engine, expire_on_commit=False)
     async with session_factory() as session:
         yield session
@@ -39,7 +46,7 @@ async def db_session(engine):
 
 
 @pytest.fixture
-async def client(engine):
+async def client(engine: AsyncEngine) -> AsyncGenerator[AsyncClient]:
     from app.main import app
 
     session_factory = async_sessionmaker(bind=engine, expire_on_commit=False)
