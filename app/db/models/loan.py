@@ -30,6 +30,10 @@ class Loan(Base):
 
     fine_cents: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+
+    __mapper_args__ = {"version_id_col": version}
+
     user = relationship("User", back_populates="loans", lazy="selectin")
     book = relationship("Book", back_populates="loans", lazy="selectin")
 

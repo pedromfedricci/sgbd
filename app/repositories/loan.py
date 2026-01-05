@@ -51,7 +51,7 @@ class LoanRepository:
         result = await self.session.execute(stmt)
         return result.scalars().all()
 
-    async def create(self, loan: Loan) -> Loan:
+    async def save(self, loan: Loan) -> Loan:
         self.session.add(loan)
         await self.session.flush()
         return loan

@@ -44,7 +44,7 @@ class TestLoanServiceCreate:
         mock_repos["users"].exists.return_value = True
         mock_repos["books"].exists.return_value = True
         mock_repos["loans"].count_active_by_user.return_value = 0
-        mock_repos["loans"].create.return_value = Loan(
+        mock_repos["loans"].save.return_value = Loan(
             id=1,
             user_id=1,
             book_id=1,
@@ -59,7 +59,7 @@ class TestLoanServiceCreate:
         mock_repos["users"].exists.assert_called_once_with(1)
         mock_repos["books"].exists.assert_called_once_with(1)
         mock_repos["loans"].count_active_by_user.assert_called_once_with(1)
-        mock_repos["loans"].create.assert_called_once()
+        mock_repos["loans"].save.assert_called_once()
 
     async def test_create_user_not_found(self, loan_service, mock_repos):
         mock_repos["users"].exists.return_value = False
@@ -69,7 +69,7 @@ class TestLoanServiceCreate:
 
         assert exc_info.value.context["user_id"] == 999
         mock_repos["books"].exists.assert_not_called()
-        mock_repos["loans"].create.assert_not_called()
+        mock_repos["loans"].save.assert_not_called()
 
     async def test_create_book_not_found(self, loan_service, mock_repos):
         mock_repos["users"].exists.return_value = True
@@ -79,7 +79,7 @@ class TestLoanServiceCreate:
             await loan_service.create(user_id=1, book_id=999)
 
         assert exc_info.value.context["book_id"] == 999
-        mock_repos["loans"].create.assert_not_called()
+        mock_repos["loans"].save.assert_not_called()
 
     async def test_create_max_loans_exceeded(self, loan_service, mock_repos):
         mock_repos["users"].exists.return_value = True
@@ -91,13 +91,13 @@ class TestLoanServiceCreate:
 
         assert exc_info.value.context["user_id"] == 1
         assert exc_info.value.context["active"] == MAX_ACTIVE_LOANS
-        mock_repos["loans"].create.assert_not_called()
+        mock_repos["loans"].save.assert_not_called()
 
     async def test_create_book_already_loaned(self, loan_service, mock_repos):
         mock_repos["users"].exists.return_value = True
         mock_repos["books"].exists.return_value = True
         mock_repos["loans"].count_active_by_user.return_value = 0
-        mock_repos["loans"].create.side_effect = IntegrityError(None, None, Exception())
+        mock_repos["loans"].save.side_effect = IntegrityError(None, None, Exception())
 
         with pytest.raises(BookAlreadyLoaned) as exc_info:
             await loan_service.create(user_id=1, book_id=1)
@@ -112,6 +112,7 @@ class TestLoanServiceFulfill:
             id=1, user_id=1, book_id=1, due_to=due_date, returned_at=None, fine_cents=0
         )
         mock_repos["loans"].get_by_id.return_value = loan
+        mock_repos["loans"].save.return_value = loan
 
         result = await loan_service.fulfill(loan_id=1)
 
@@ -126,6 +127,7 @@ class TestLoanServiceFulfill:
             id=1, user_id=1, book_id=1, due_to=due_date, returned_at=None, fine_cents=0
         )
         mock_repos["loans"].get_by_id.return_value = loan
+        mock_repos["loans"].save.return_value = loan
 
         result = await loan_service.fulfill(loan_id=1)
 

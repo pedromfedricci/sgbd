@@ -4,12 +4,14 @@ from datetime import UTC, datetime, timedelta
 import structlog
 from opentelemetry import trace
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm.exc import StaleDataError
 
 from app.db.models.loan import Loan
 from app.exceptions.domain import (
     BookAlreadyLoaned,
     BookNotFound,
     LoanAlreadyReturned,
+    LoanConcurrentModification,
     LoanNotFound,
     MaxActiveLoansExceeded,
     UserNotFound,
@@ -80,7 +82,7 @@ class LoanService:
             loan = Loan(user_id=user_id, book_id=book_id, due_to=due_to)
 
             try:
-                created = await self.loans.create(loan)
+                created = await self.loans.save(loan)
                 span.set_attribute("loan_id", created.id)
                 logger.info(
                     "loan_created", loan_id=created.id, due_to=due_to.isoformat()
@@ -128,7 +130,11 @@ class LoanService:
             else:
                 logger.info("loan_returned_on_time")
 
-            return loan
+            try:
+                return await self.loans.save(loan)
+            except StaleDataError as exc:
+                logger.warning("loan_return_failed", reason="concurrent_modification")
+                raise LoanConcurrentModification(loan_id=loan_id) from exc
 
     async def list_active(self, offset: int, limit: int) -> Sequence[Loan]:
         with tracer.start_as_current_span("LoanService.list_active") as span:

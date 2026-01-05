@@ -39,3 +39,7 @@ class LoanAlreadyReturned(AppException):
 
 class MaxActiveLoansExceeded(AppException):
     code: str = "max_active_loans_exceeded"
+
+
+class LoanConcurrentModification(AppException):
+    code: str = "loan_concurrent_modification"

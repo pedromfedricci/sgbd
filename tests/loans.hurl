@@ -231,7 +231,6 @@ HTTP 200
 jsonpath "$" isCollection
 jsonpath "$" count == 3
 
-# LOAN_NOT_FOUND
 
 # --------------------------------------------
 # Return loan - success

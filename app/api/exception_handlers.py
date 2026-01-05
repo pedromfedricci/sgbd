@@ -9,6 +9,7 @@ from app.exceptions.domain import (
     BookNotFound,
     EmailAlreadyRegistered,
     LoanAlreadyReturned,
+    LoanConcurrentModification,
     LoanNotFound,
     MaxActiveLoansExceeded,
     UserNotFound,
@@ -24,6 +25,7 @@ ERROR_MAP = {
     BookAlreadyLoaned: (status.HTTP_409_CONFLICT, "Book already loaned"),
     EmailAlreadyRegistered: (status.HTTP_409_CONFLICT, "Email already registered"),
     LoanAlreadyReturned: (status.HTTP_409_CONFLICT, "Loan already returned"),
+    LoanConcurrentModification: (status.HTTP_409_CONFLICT, "Loan was modified concurrently"),
     MaxActiveLoansExceeded: (status.HTTP_409_CONFLICT, "Max active loans exceeded"),
 }
 
