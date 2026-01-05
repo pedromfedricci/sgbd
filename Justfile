@@ -19,7 +19,7 @@ dev-up:
     {{compose}} {{files}} up --detach -V
 
 dev-up-local:
-    {{compose}} {{files}} up --detach db jaeger
+    {{compose}} {{files}} up --detach db
     sleep 5
     ./scripts/start.sh
 
@@ -55,3 +55,23 @@ dev-api-bash:
 
 dev-db-psql:
     {{compose}} {{files}} exec db psql -U sgbd -d sgbd
+
+# Run E2E tests with fresh containers
+test-e2e:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    cleanup() {
+        echo "Cleaning up..."
+        {{compose}} {{files}} down --volumes --remove-orphans
+    }
+    trap cleanup EXIT
+
+    echo "Starting services..."
+    {{compose}} {{files}} up --build --force-recreate --detach
+
+    echo "Waiting for API to be healthy..."
+    timeout 60 bash -c 'until curl -sf http://localhost:8000/docs > /dev/null; do sleep 1; done'
+
+    echo "Running hurl tests..."
+    hurl --test tests/*.hurl

@@ -49,7 +49,7 @@ HTTP 201
 
 
 # --------------------------------------------
-# Create book - duplicate title and author (blocked)
+# Create book - duplicate title and author (allowed)
 # --------------------------------------------
 POST http://localhost:8000/books
 Content-Type: application/json
@@ -57,11 +57,13 @@ Content-Type: application/json
   "title": "Dom Casmurro",
   "author": "Machado de Assis"
 }
-HTTP 409
+HTTP 201
+[Captures]
+book_id_1: jsonpath "$.id"
 [Asserts]
-jsonpath "$.code" == "book_already_exists"
-jsonpath "$.context.title" == "Dom Casmurro"
-jsonpath "$.context.author" == "Machado de Assis"
+jsonpath "$.id" isInteger
+jsonpath "$.title" == "Dom Casmurro"
+jsonpath "$.author" == "Machado de Assis"
 
 
 # --------------------------------------------
