@@ -42,7 +42,9 @@ class UserService:
             try:
                 created = await self.users.create(user)
             except IntegrityError as exc:
-                logger.warning("user_creation_failed", reason="email_registered", email=email)
+                logger.warning(
+                    "user_creation_failed", reason="email_registered", email=email
+                )
                 raise EmailAlreadyRegistered(email=email) from exc
 
             structlog.contextvars.bind_contextvars(user_id=created.id)
