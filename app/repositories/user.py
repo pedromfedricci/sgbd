@@ -26,6 +26,11 @@ class UserRepository:
     async def get_by_id(self, user_id: int) -> User | None:
         return await self.session.get(User, user_id)
 
+    async def get_for_update(self, user_id: int) -> User | None:
+        stmt = select(User).where(User.id == user_id).with_for_update()
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
+
     async def get_by_email(self, email: str) -> User | None:
         stmt = select(User).where(User.email == email)
         result = await self.session.execute(stmt)

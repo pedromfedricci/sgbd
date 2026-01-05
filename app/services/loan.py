@@ -57,13 +57,15 @@ class LoanService:
             span.set_attribute("user_id", user_id)
             span.set_attribute("book_id", book_id)
 
-            if not await self.users.exists(user_id):
-                logger.warning("loan_creation_failed", reason="user_not_found")
-                raise UserNotFound(user_id=user_id)
-
             if not await self.books.exists(book_id):
                 logger.warning("loan_creation_failed", reason="book_not_found")
                 raise BookNotFound(book_id=book_id)
+
+            # Lock user row to serialize concurrent loan creation per user
+            user = await self.users.get_for_update(user_id)
+            if not user:
+                logger.warning("loan_creation_failed", reason="user_not_found")
+                raise UserNotFound(user_id=user_id)
 
             active = await self.loans.count_active_by_user(user_id)
             span.set_attribute("active_loans", active)

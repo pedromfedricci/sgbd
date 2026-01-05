@@ -5,6 +5,7 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 
 from app.db.models.loan import Loan
+from app.db.models.user import User
 from app.exceptions.domain import (
     BookAlreadyLoaned,
     BookNotFound,
@@ -19,6 +20,8 @@ from app.services.loan import (
     MAX_ACTIVE_LOANS,
     LoanService,
 )
+
+USER_1: User = User(id=1, name="Test", email="test@email.com")
 
 
 @pytest.fixture
@@ -41,7 +44,7 @@ def loan_service(mock_repos):
 
 class TestLoanServiceCreate:
     async def test_create_success(self, loan_service, mock_repos):
-        mock_repos["users"].exists.return_value = True
+        mock_repos["users"].get_for_update.return_value = USER_1
         mock_repos["books"].exists.return_value = True
         mock_repos["loans"].count_active_by_user.return_value = 0
         mock_repos["loans"].save.return_value = Loan(
@@ -56,33 +59,33 @@ class TestLoanServiceCreate:
         assert result.id == 1
         assert result.user_id == 1
         assert result.book_id == 1
-        mock_repos["users"].exists.assert_called_once_with(1)
+        mock_repos["users"].get_for_update.assert_called_once_with(1)
         mock_repos["books"].exists.assert_called_once_with(1)
         mock_repos["loans"].count_active_by_user.assert_called_once_with(1)
         mock_repos["loans"].save.assert_called_once()
 
     async def test_create_user_not_found(self, loan_service, mock_repos):
-        mock_repos["users"].exists.return_value = False
+        mock_repos["books"].exists.return_value = True
+        mock_repos["users"].get_for_update.return_value = None
 
         with pytest.raises(UserNotFound) as exc_info:
             await loan_service.create(user_id=999, book_id=1)
 
         assert exc_info.value.context["user_id"] == 999
-        mock_repos["books"].exists.assert_not_called()
         mock_repos["loans"].save.assert_not_called()
 
     async def test_create_book_not_found(self, loan_service, mock_repos):
-        mock_repos["users"].exists.return_value = True
         mock_repos["books"].exists.return_value = False
 
         with pytest.raises(BookNotFound) as exc_info:
             await loan_service.create(user_id=1, book_id=999)
 
         assert exc_info.value.context["book_id"] == 999
+        mock_repos["users"].get_for_update.assert_not_called()
         mock_repos["loans"].save.assert_not_called()
 
     async def test_create_max_loans_exceeded(self, loan_service, mock_repos):
-        mock_repos["users"].exists.return_value = True
+        mock_repos["users"].get_for_update.return_value = USER_1
         mock_repos["books"].exists.return_value = True
         mock_repos["loans"].count_active_by_user.return_value = MAX_ACTIVE_LOANS
 
@@ -94,7 +97,7 @@ class TestLoanServiceCreate:
         mock_repos["loans"].save.assert_not_called()
 
     async def test_create_book_already_loaned(self, loan_service, mock_repos):
-        mock_repos["users"].exists.return_value = True
+        mock_repos["users"].get_for_update.return_value = USER_1
         mock_repos["books"].exists.return_value = True
         mock_repos["loans"].count_active_by_user.return_value = 0
         mock_repos["loans"].save.side_effect = IntegrityError(None, None, Exception())
