@@ -2,6 +2,7 @@ from collections.abc import Sequence
 
 import structlog
 from opentelemetry import trace
+from sqlalchemy.exc import IntegrityError
 
 from app.db.models.loan import Loan
 from app.db.models.user import User
@@ -37,7 +38,12 @@ class UserService:
                 raise EmailAlreadyRegistered(email=email)
 
             user = User(name=name, email=email)
-            created = await self.users.create(user)
+
+            try:
+                created = await self.users.create(user)
+            except IntegrityError as exc:
+                logger.warning("user_creation_failed", reason="email_registered", email=email)
+                raise EmailAlreadyRegistered(email=email) from exc
 
             structlog.contextvars.bind_contextvars(user_id=created.id)
             span.set_attribute("user_id", created.id)

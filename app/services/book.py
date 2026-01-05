@@ -2,6 +2,7 @@ from collections.abc import Sequence
 
 import structlog
 from opentelemetry import trace
+from sqlalchemy.exc import IntegrityError
 
 from app.cache.book import BookCache
 from app.db.models.book import Book
@@ -64,7 +65,17 @@ class BookService:
                 raise BookAlreadyExists(title=title, author=author)
 
             book = Book(title=title, author=author)
-            created = await self.books.create(book)
+
+            try:
+                created = await self.books.create(book)
+            except IntegrityError as exc:
+                logger.warning(
+                    "book_creation_failed",
+                    reason="book_already_exists",
+                    title=title,
+                    author=author,
+                )
+                raise BookAlreadyExists(title=title, author=author) from exc
 
             structlog.contextvars.bind_contextvars(book_id=created.id)
             span.set_attribute("book_id", created.id)
