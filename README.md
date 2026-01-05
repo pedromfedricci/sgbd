@@ -36,6 +36,7 @@ utilizando Python, FastAPI, PostgreSQL, SQLAlchemy (async) e Alembic.
 app/
 ├── api/            # Camada HTTP (FastAPI routers)
 ├── dependencies/   # Injeção de dependências
+├── cache/          # Cache two-tier (in-memory + Redis)
 ├── db/
 │   ├── models/     # Modelos SQLAlchemy
 │   ├── session.py  # Sessão async
@@ -53,8 +54,6 @@ app/
 
 ## Arquitetura
 
-### Arquitetura
-
 ```text
 HTTP Request
      ↓
@@ -65,14 +64,15 @@ HTTP Request
 ┌─────────────────────────────────────┐
 │  Service Layer (app/services/)      │  Regras de negócio, orquestração
 └─────────────────────────────────────┘
-     ↓
-┌─────────────────────────────────────┐
-│  Repository Layer (app/repositories)│  Queries SQL, abstração do banco
-└─────────────────────────────────────┘
-     ↓
-┌─────────────────────────────────────┐
-│  Database Layer (app/db/)           │  Modelos ORM, sessão async
-└─────────────────────────────────────┘
+     ↓                            ↓
+┌──────────────────┐    ┌─────────────────────────────────────┐
+│  Cache Layer     │    │  Repository Layer (app/repositories)│
+│  (app/cache/)    │    │  Queries SQL, abstração do banco    │
+└──────────────────┘    └─────────────────────────────────────┘
+     ↓                            ↓
+┌──────────────────┐    ┌─────────────────────────────────────┐
+│  Redis           │    │  PostgreSQL                         │
+└──────────────────┘    └─────────────────────────────────────┘
 ```
 
 ### Fluxo de Requisição
@@ -94,10 +94,11 @@ Exemplo: `POST /loans` (criar empréstimo)
 - [x] Validação robusta com Pydantic
 - [x] Logging estruturado de operações
 
-## Intermediário
+### Intermediário
 
 - [x] Sistema de reserva de livros
 - [x] Testes automatizados (unitários + integração)
+- [x] Cache de livros (two-tier: in-memory + Redis)
 
 ### Avançado
 
@@ -226,6 +227,39 @@ just dev-up
 ```
 
 Acesse a UI do Jaeger em: http://localhost:16686
+
+## Caching
+
+A aplicação utiliza cache two-tier para consultas de livros por ID:
+
+```text
+GET /books/{id}
+     ↓
+In-memory (TTL: 60s)
+     ↓ miss
+Redis (TTL: 5min)
+     ↓ miss
+PostgreSQL → popula ambos caches → retorna
+```
+
+### Configuração
+
+| Camada    | TTL   | Propósito                              |
+|-----------|-------|----------------------------------------|
+| In-memory | 60s   | Latência mínima, local por instância   |
+| Redis     | 5min  | Cache compartilhado entre instâncias   |
+
+### Degradação Graciosa
+
+Se o Redis estiver indisponível:
+- A aplicação continua funcionando normalmente
+- Requisições são atendidas diretamente pelo banco de dados
+- Logs de warning são emitidos para monitoramento
+
+### O que é cacheado
+
+- **Metadados de livros**: id, título, autor (dados que raramente mudam)
+- **Não cacheado**: disponibilidade do livro (sempre consultado no banco para garantir consistência com empréstimos)
 
 ## Testes
 

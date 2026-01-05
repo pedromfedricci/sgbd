@@ -9,6 +9,10 @@ services:
     env_file:
       - .env.dev
 
+  redis:
+    ports:
+      - "127.0.0.1:${REDIS_PORT}:${REDIS_PORT}/tcp"
+
   jaeger:
     ports:
       - "127.0.0.1:${JAEGER_UI_PORT}:${JAEGER_UI_PORT}/tcp"

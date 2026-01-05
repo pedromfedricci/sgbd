@@ -19,6 +19,8 @@ dependencies = [
   "opentelemetry-instrumentation-fastapi>=0.60b1",
   "opentelemetry-instrumentation-sqlalchemy>=0.60b1",
   "opentelemetry-exporter-otlp>=1.39.1",
+  "redis>=5.0.0",
+  "cachetools>=5.0.0",
 ]
 
 [project.optional-dependencies]

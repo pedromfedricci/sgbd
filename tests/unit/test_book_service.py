@@ -13,8 +13,15 @@ def mock_book_repo():
 
 
 @pytest.fixture
-def book_service(mock_book_repo):
-    return BookService(books=mock_book_repo)
+def mock_book_cache():
+    cache = AsyncMock()
+    cache.get.return_value = None  # Default: cache miss
+    return cache
+
+
+@pytest.fixture
+def book_service(mock_book_repo, mock_book_cache):
+    return BookService(books=mock_book_repo, cache=mock_book_cache)
 
 
 class TestBookServiceCreate:

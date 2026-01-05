@@ -3,6 +3,7 @@ from collections.abc import Sequence
 import structlog
 from opentelemetry import trace
 
+from app.cache.book import BookCache
 from app.db.models.book import Book
 from app.exceptions.domain import BookAlreadyExists, BookNotFound
 from app.repositories.book import BookRepository
@@ -12,8 +13,9 @@ tracer = trace.get_tracer("sgbd.services.book")
 
 
 class BookService:
-    def __init__(self, books: BookRepository):
+    def __init__(self, books: BookRepository, cache: BookCache):
         self.books = books
+        self.cache = cache
 
     async def list_all(self, *, offset: int = 0, limit: int = 50) -> Sequence[Book]:
         with tracer.start_as_current_span("BookService.list_all") as span:
@@ -29,12 +31,21 @@ class BookService:
         with tracer.start_as_current_span("BookService.get_by_id") as span:
             span.set_attribute("book_id", book_id)
 
+            # Try cache first
+            book = await self.cache.get(book_id)
+            if book is not None:
+                span.set_attribute("cache_hit", True)
+                return book
+
+            span.set_attribute("cache_hit", False)
             book = await self.books.get_by_id(book_id)
 
             if book is None:
                 logger.warning("book_not_found", book_id=book_id)
                 raise BookNotFound(book_id=book_id)
 
+            # Populate cache on DB hit
+            await self.cache.set(book)
             return book
 
     async def create(self, *, title: str, author: str) -> Book:
