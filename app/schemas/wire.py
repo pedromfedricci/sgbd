@@ -10,4 +10,5 @@ class WireModel(BaseModel):
         populate_by_name=True,
         str_strip_whitespace=True,
         use_enum_values=True,
+        from_attributes=True,
     )

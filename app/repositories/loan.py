@@ -20,10 +20,10 @@ class LoanRepository:
         result = await self.session.execute(stmt)
         return result.scalars().all()
 
-    async def active_loan_for_book(self, book_id: int) -> Loan | None:
-        was_loaned = Loan.book_id == book_id
-        returned = Loan.returned_at.is_(None)
-        stmt = select(Loan).where(was_loaned, returned)
+    async def active_loan_for_copy(self, copy_id: int) -> Loan | None:
+        is_copy = Loan.copy_id == copy_id
+        not_returned = Loan.returned_at.is_(None)
+        stmt = select(Loan).where(is_copy, not_returned)
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 

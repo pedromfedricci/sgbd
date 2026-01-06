@@ -2,6 +2,7 @@ from fastapi import APIRouter, status
 
 from app.api.dependencies import book_service
 from app.schemas.book import BookCreate, BookResponse
+from app.schemas.book_copy import BookCopyResponse
 from app.services.book import BookService
 
 router = APIRouter(prefix="/books", tags=["books"])
@@ -22,3 +23,17 @@ async def get_book(book_id: int, books: BookService = book_service()):
 @router.post("", response_model=BookResponse, status_code=status.HTTP_201_CREATED)
 async def create_book(book: BookCreate, books: BookService = book_service()):
     return await books.create(title=book.title, author=book.author)
+
+
+@router.get("/{book_id}/copies", response_model=list[BookCopyResponse])
+async def list_copies(book_id: int, books: BookService = book_service()):
+    return await books.list_copies(book_id=book_id)
+
+
+@router.post(
+    "/{book_id}/copies",
+    response_model=BookCopyResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_copy(book_id: int, books: BookService = book_service()):
+    return await books.create_copy(book_id=book_id)

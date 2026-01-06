@@ -8,15 +8,16 @@ from sqlalchemy.orm.exc import StaleDataError
 
 from app.db.models.loan import Loan
 from app.exceptions.domain import (
-    BookAlreadyLoaned,
     BookNotFound,
     LoanAlreadyReturned,
     LoanConcurrentModification,
     LoanNotFound,
     MaxActiveLoansExceeded,
+    NoCopiesAvailable,
     UserNotFound,
 )
 from app.repositories.book import BookRepository
+from app.repositories.book_copy import BookCopyRepository
 from app.repositories.loan import LoanRepository
 from app.repositories.user import UserRepository
 
@@ -30,11 +31,16 @@ tracer = trace.get_tracer("sgbd.services.loan")
 
 class LoanService:
     def __init__(
-        self, loans: LoanRepository, users: UserRepository, books: BookRepository
+        self,
+        loans: LoanRepository,
+        users: UserRepository,
+        books: BookRepository,
+        copies: BookCopyRepository,
     ):
         self.loans = loans
         self.users = users
         self.books = books
+        self.copies = copies
 
     async def list_by_user(self, user_id: int) -> Sequence[Loan]:
         structlog.contextvars.bind_contextvars(user_id=user_id)
@@ -79,20 +85,32 @@ class LoanService:
                 )
                 raise MaxActiveLoansExceeded(user_id=user_id, active=active)
 
+            # Find an available copy
+            copy = await self.copies.get_available_for_book(book_id)
+            if not copy:
+                logger.warning("loan_creation_failed", reason="no_copies_available")
+                raise NoCopiesAvailable(book_id=book_id)
+
+            span.set_attribute("copy_id", copy.id)
+
             now = datetime.now(UTC)
             due_to = now + timedelta(days=LOAN_DAYS)
-            loan = Loan(user_id=user_id, book_id=book_id, due_to=due_to)
+            loan = Loan(user_id=user_id, copy_id=copy.id, due_to=due_to)
 
             try:
                 created = await self.loans.save(loan)
                 span.set_attribute("loan_id", created.id)
                 logger.info(
-                    "loan_created", loan_id=created.id, due_to=due_to.isoformat()
+                    "loan_created",
+                    loan_id=created.id,
+                    copy_id=copy.id,
+                    due_to=due_to.isoformat(),
                 )
                 return created
             except IntegrityError as exc:
-                logger.warning("loan_creation_failed", reason="book_already_loaned")
-                raise BookAlreadyLoaned(book_id=book_id) from exc
+                # Concurrent request took this copy
+                logger.warning("loan_creation_failed", reason="no_copies_available")
+                raise NoCopiesAvailable(book_id=book_id) from exc
 
     async def fulfill(self, loan_id: int) -> Loan:
         structlog.contextvars.bind_contextvars(loan_id=loan_id)
@@ -107,9 +125,9 @@ class LoanService:
                 raise LoanNotFound(loan_id=loan_id)
 
             span.set_attribute("user_id", loan.user_id)
-            span.set_attribute("book_id", loan.book_id)
+            span.set_attribute("copy_id", loan.copy_id)
             structlog.contextvars.bind_contextvars(
-                user_id=loan.user_id, book_id=loan.book_id
+                user_id=loan.user_id, copy_id=loan.copy_id
             )
 
             if loan.returned_at is not None:

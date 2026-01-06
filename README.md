@@ -30,6 +30,52 @@ utilizando Python, FastAPI, PostgreSQL, SQLAlchemy (async) e Alembic.
 - Regra: usuário pode ter no máximo 3 empréstimos ativos
 - Regra: um livro não pode ser emprestado se já estiver ativo
 
+## Modelo de Dados
+
+```mermaid
+erDiagram
+    USER {
+        int id PK
+        string name
+        string email UK
+        datetime created_at
+    }
+
+    BOOK {
+        int id PK
+        string title
+        string author
+        datetime created_at
+    }
+
+    BOOK_COPY {
+        int id PK
+        int book_id FK
+        datetime acquired_at
+    }
+
+    LOAN {
+        int id PK
+        int user_id FK
+        int copy_id FK
+        datetime due_to
+        datetime returned_at
+        int fine_cents
+        int version
+        datetime created_at
+    }
+
+    USER ||--o{ LOAN : "has"
+    BOOK ||--o{ BOOK_COPY : "has"
+    BOOK_COPY ||--o{ LOAN : "loaned in"
+```
+
+**Regras de negócio:**
+- `BOOK` + `BOOK_COPY`: Um livro (registro bibliográfico) pode ter múltiplas cópias físicas
+- `LOAN.copy_id`: Empréstimo referencia uma cópia específica, não o livro
+- `LOAN.version`: Controle de concorrência otimista para atualizações
+- `BOOK(title, author)`: Constraint única - não permite livros duplicados
+
 ## Organização
 
 ```text
@@ -171,6 +217,18 @@ curl -X POST http://localhost:8000/books \
   -d '{"title": "Dom Casmurro", "author": "Machado de Assis"}'
 ```
 
+#### Adicionar cópia do livro
+
+```bash
+curl -X POST http://localhost:8000/books/1/copies
+```
+
+#### Listar cópias de um livro
+
+```bash
+curl http://localhost:8000/books/1/copies
+```
+
 #### Realizar empréstimo
 
 ```bash
@@ -178,6 +236,8 @@ curl -X POST http://localhost:8000/loans \
   -H "Content-Type: application/json" \
   -d '{"user_id": 1, "book_id": 1}'
 ```
+
+> O sistema encontra automaticamente uma cópia disponível do livro.
 
 #### Devolver livro
 

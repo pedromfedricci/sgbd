@@ -10,7 +10,7 @@ class LoanCreate(WireModel):
 
 class LoanResponse(WireModel):
     id: int
-    book_id: int
+    copy_id: int
     user_id: int
     loaned_at: datetime
     due_to: datetime

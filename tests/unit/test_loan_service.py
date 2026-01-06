@@ -4,14 +4,15 @@ from unittest.mock import AsyncMock
 import pytest
 from sqlalchemy.exc import IntegrityError
 
+from app.db.models.book_copy import BookCopy
 from app.db.models.loan import Loan
 from app.db.models.user import User
 from app.exceptions.domain import (
-    BookAlreadyLoaned,
     BookNotFound,
     LoanAlreadyReturned,
     LoanNotFound,
     MaxActiveLoansExceeded,
+    NoCopiesAvailable,
     UserNotFound,
 )
 from app.services.loan import (
@@ -22,6 +23,7 @@ from app.services.loan import (
 )
 
 USER_1: User = User(id=1, name="Test", email="test@email.com")
+COPY_1: BookCopy = BookCopy(id=1, book_id=1)
 
 
 @pytest.fixture
@@ -30,6 +32,7 @@ def mock_repos():
         "loans": AsyncMock(),
         "users": AsyncMock(),
         "books": AsyncMock(),
+        "copies": AsyncMock(),
     }
 
 
@@ -39,18 +42,20 @@ def loan_service(mock_repos):
         loans=mock_repos["loans"],
         users=mock_repos["users"],
         books=mock_repos["books"],
+        copies=mock_repos["copies"],
     )
 
 
 class TestLoanServiceCreate:
     async def test_create_success(self, loan_service, mock_repos):
-        mock_repos["users"].get_for_update.return_value = USER_1
         mock_repos["books"].exists.return_value = True
+        mock_repos["users"].get_for_update.return_value = USER_1
         mock_repos["loans"].count_active_by_user.return_value = 0
+        mock_repos["copies"].get_available_for_book.return_value = COPY_1
         mock_repos["loans"].save.return_value = Loan(
             id=1,
             user_id=1,
-            book_id=1,
+            copy_id=1,
             due_to=datetime.now(UTC) + timedelta(days=LOAN_DAYS),
         )
 
@@ -58,10 +63,11 @@ class TestLoanServiceCreate:
 
         assert result.id == 1
         assert result.user_id == 1
-        assert result.book_id == 1
-        mock_repos["users"].get_for_update.assert_called_once_with(1)
+        assert result.copy_id == 1
         mock_repos["books"].exists.assert_called_once_with(1)
+        mock_repos["users"].get_for_update.assert_called_once_with(1)
         mock_repos["loans"].count_active_by_user.assert_called_once_with(1)
+        mock_repos["copies"].get_available_for_book.assert_called_once_with(1)
         mock_repos["loans"].save.assert_called_once()
 
     async def test_create_user_not_found(self, loan_service, mock_repos):
@@ -85,8 +91,8 @@ class TestLoanServiceCreate:
         mock_repos["loans"].save.assert_not_called()
 
     async def test_create_max_loans_exceeded(self, loan_service, mock_repos):
-        mock_repos["users"].get_for_update.return_value = USER_1
         mock_repos["books"].exists.return_value = True
+        mock_repos["users"].get_for_update.return_value = USER_1
         mock_repos["loans"].count_active_by_user.return_value = MAX_ACTIVE_LOANS
 
         with pytest.raises(MaxActiveLoansExceeded) as exc_info:
@@ -96,13 +102,26 @@ class TestLoanServiceCreate:
         assert exc_info.value.context["active"] == MAX_ACTIVE_LOANS
         mock_repos["loans"].save.assert_not_called()
 
-    async def test_create_book_already_loaned(self, loan_service, mock_repos):
-        mock_repos["users"].get_for_update.return_value = USER_1
+    async def test_create_no_copies_available(self, loan_service, mock_repos):
         mock_repos["books"].exists.return_value = True
+        mock_repos["users"].get_for_update.return_value = USER_1
         mock_repos["loans"].count_active_by_user.return_value = 0
+        mock_repos["copies"].get_available_for_book.return_value = None
+
+        with pytest.raises(NoCopiesAvailable) as exc_info:
+            await loan_service.create(user_id=1, book_id=1)
+
+        assert exc_info.value.context["book_id"] == 1
+        mock_repos["loans"].save.assert_not_called()
+
+    async def test_create_concurrent_copy_taken(self, loan_service, mock_repos):
+        mock_repos["books"].exists.return_value = True
+        mock_repos["users"].get_for_update.return_value = USER_1
+        mock_repos["loans"].count_active_by_user.return_value = 0
+        mock_repos["copies"].get_available_for_book.return_value = COPY_1
         mock_repos["loans"].save.side_effect = IntegrityError(None, None, Exception())
 
-        with pytest.raises(BookAlreadyLoaned) as exc_info:
+        with pytest.raises(NoCopiesAvailable) as exc_info:
             await loan_service.create(user_id=1, book_id=1)
 
         assert exc_info.value.context["book_id"] == 1
@@ -112,7 +131,7 @@ class TestLoanServiceFulfill:
     async def test_fulfill_on_time(self, loan_service, mock_repos):
         due_date = datetime.now(UTC) + timedelta(days=7)
         loan = Loan(
-            id=1, user_id=1, book_id=1, due_to=due_date, returned_at=None, fine_cents=0
+            id=1, user_id=1, copy_id=1, due_to=due_date, returned_at=None, fine_cents=0
         )
         mock_repos["loans"].get_by_id.return_value = loan
         mock_repos["loans"].save.return_value = loan
@@ -127,7 +146,7 @@ class TestLoanServiceFulfill:
         days_late = 5
         due_date = datetime.now(UTC) - timedelta(days=days_late)
         loan = Loan(
-            id=1, user_id=1, book_id=1, due_to=due_date, returned_at=None, fine_cents=0
+            id=1, user_id=1, copy_id=1, due_to=due_date, returned_at=None, fine_cents=0
         )
         mock_repos["loans"].get_by_id.return_value = loan
         mock_repos["loans"].save.return_value = loan
@@ -149,7 +168,7 @@ class TestLoanServiceFulfill:
         loan = Loan(
             id=1,
             user_id=1,
-            book_id=1,
+            copy_id=1,
             due_to=datetime.now(UTC),
             returned_at=datetime.now(UTC),
             fine_cents=0,
@@ -166,8 +185,8 @@ class TestLoanServiceListByUser:
     async def test_list_by_user_success(self, loan_service, mock_repos):
         mock_repos["users"].exists.return_value = True
         mock_repos["loans"].list_by_user.return_value = [
-            Loan(id=1, user_id=1, book_id=1),
-            Loan(id=2, user_id=1, book_id=2),
+            Loan(id=1, user_id=1, copy_id=1),
+            Loan(id=2, user_id=1, copy_id=2),
         ]
 
         result = await loan_service.list_by_user(user_id=1)
@@ -188,7 +207,7 @@ class TestLoanServiceListByUser:
 class TestLoanServiceListActive:
     async def test_list_active(self, loan_service, mock_repos):
         mock_repos["loans"].list_active.return_value = [
-            Loan(id=1, user_id=1, book_id=1),
+            Loan(id=1, user_id=1, copy_id=1),
         ]
 
         result = await loan_service.list_active(offset=0, limit=10)
@@ -200,7 +219,7 @@ class TestLoanServiceListActive:
 class TestLoanServiceListOverdue:
     async def test_list_overdue(self, loan_service, mock_repos):
         mock_repos["loans"].list_overdue.return_value = [
-            Loan(id=1, user_id=1, book_id=1),
+            Loan(id=1, user_id=1, copy_id=1),
         ]
 
         result = await loan_service.list_overdue(offset=0, limit=10)

@@ -29,6 +29,11 @@ HTTP 201
 [Captures]
 book_id_1: jsonpath "$.id"
 
+POST http://localhost:8000/books/{{book_id_1}}/copies
+HTTP 201
+[Captures]
+copy_id_1: jsonpath "$.id"
+
 
 POST http://localhost:8000/books
 Content-Type: application/json
@@ -39,6 +44,11 @@ Content-Type: application/json
 HTTP 201
 [Captures]
 book_id_2: jsonpath "$.id"
+
+POST http://localhost:8000/books/{{book_id_2}}/copies
+HTTP 201
+[Captures]
+copy_id_2: jsonpath "$.id"
 
 
 POST http://localhost:8000/books
@@ -51,6 +61,11 @@ HTTP 201
 [Captures]
 book_id_3: jsonpath "$.id"
 
+POST http://localhost:8000/books/{{book_id_3}}/copies
+HTTP 201
+[Captures]
+copy_id_3: jsonpath "$.id"
+
 
 POST http://localhost:8000/books
 Content-Type: application/json
@@ -61,6 +76,11 @@ Content-Type: application/json
 HTTP 201
 [Captures]
 book_id_4: jsonpath "$.id"
+
+POST http://localhost:8000/books/{{book_id_4}}/copies
+HTTP 201
+[Captures]
+copy_id_4: jsonpath "$.id"
 
 
 # --------------------------------------------
@@ -78,14 +98,14 @@ loan_id_1: jsonpath "$.id"
 [Asserts]
 jsonpath "$.id" isInteger
 jsonpath "$.user_id" == {{user_id}}
-jsonpath "$.book_id" == {{book_id_1}}
+jsonpath "$.copy_id" == {{copy_id_1}}
 jsonpath "$.returned_at" == null
 jsonpath "$.fine_cents" == 0
 jsonpath "$.due_to" isString
 
 
 # --------------------------------------------
-# Create loan - book already loaned
+# Create loan - no copies available (book already loaned)
 # --------------------------------------------
 POST http://localhost:8000/loans
 Content-Type: application/json
@@ -95,7 +115,7 @@ Content-Type: application/json
 }
 HTTP 409
 [Asserts]
-jsonpath "$.code" == "book_already_loaned"
+jsonpath "$.code" == "no_copies_available"
 jsonpath "$.context.book_id" == {{book_id_1}}
 
 
@@ -273,7 +293,7 @@ Content-Type: application/json
 }
 HTTP 201
 [Asserts]
-jsonpath "$.book_id" == {{book_id_1}}
+jsonpath "$.copy_id" == {{copy_id_1}}
 
 
 # --------------------------------------------

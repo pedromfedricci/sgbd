@@ -4,13 +4,14 @@ from fastapi.responses import JSONResponse
 
 from app.exceptions.domain import (
     AppException,
-    BookAlreadyLoaned,
+    BookAlreadyExists,
     BookNotFound,
     EmailAlreadyRegistered,
     LoanAlreadyReturned,
     LoanConcurrentModification,
     LoanNotFound,
     MaxActiveLoansExceeded,
+    NoCopiesAvailable,
     UserNotFound,
 )
 
@@ -20,7 +21,7 @@ ERROR_MAP = {
     UserNotFound: (status.HTTP_404_NOT_FOUND, "User not found"),
     BookNotFound: (status.HTTP_404_NOT_FOUND, "Book not found"),
     LoanNotFound: (status.HTTP_404_NOT_FOUND, "Loan not found"),
-    BookAlreadyLoaned: (status.HTTP_409_CONFLICT, "Book already loaned"),
+    BookAlreadyExists: (status.HTTP_409_CONFLICT, "Book already exists"),
     EmailAlreadyRegistered: (status.HTTP_409_CONFLICT, "Email already registered"),
     LoanAlreadyReturned: (status.HTTP_409_CONFLICT, "Loan already returned"),
     LoanConcurrentModification: (
@@ -28,6 +29,7 @@ ERROR_MAP = {
         "Loan was modified concurrently",
     ),
     MaxActiveLoansExceeded: (status.HTTP_409_CONFLICT, "Max active loans exceeded"),
+    NoCopiesAvailable: (status.HTTP_409_CONFLICT, "No copies available for loan"),
 }
 
 UNKNOWN_ERROR: tuple[int, str] = (

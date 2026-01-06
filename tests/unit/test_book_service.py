@@ -1,14 +1,21 @@
 from unittest.mock import AsyncMock
 
 import pytest
+from sqlalchemy.exc import IntegrityError
 
 from app.db.models.book import Book
-from app.exceptions.domain import BookNotFound
+from app.db.models.book_copy import BookCopy
+from app.exceptions.domain import BookAlreadyExists, BookNotFound
 from app.services.book import BookService
 
 
 @pytest.fixture
 def mock_book_repo():
+    return AsyncMock()
+
+
+@pytest.fixture
+def mock_copy_repo():
     return AsyncMock()
 
 
@@ -20,8 +27,10 @@ def mock_book_cache():
 
 
 @pytest.fixture
-def book_service(mock_book_repo, mock_book_cache):
-    return BookService(books=mock_book_repo, cache=mock_book_cache)
+def book_service(mock_book_repo, mock_copy_repo, mock_book_cache):
+    return BookService(
+        books=mock_book_repo, copies=mock_copy_repo, cache=mock_book_cache
+    )
 
 
 class TestBookServiceCreate:
@@ -38,6 +47,15 @@ class TestBookServiceCreate:
         assert result.title == "Dom Casmurro"
         assert result.author == "Machado de Assis"
         mock_book_repo.create.assert_called_once()
+
+    async def test_create_already_exists(self, book_service, mock_book_repo):
+        mock_book_repo.create.side_effect = IntegrityError(None, None, Exception())
+
+        with pytest.raises(BookAlreadyExists) as exc_info:
+            await book_service.create(title="Dom Casmurro", author="Machado de Assis")
+
+        assert exc_info.value.context["title"] == "Dom Casmurro"
+        assert exc_info.value.context["author"] == "Machado de Assis"
 
 
 class TestBookServiceGetById:
@@ -89,3 +107,57 @@ class TestBookServiceListAll:
 
         assert len(result) == 1
         mock_book_repo.list_all.assert_called_once_with(offset=2, limit=1)
+
+
+class TestBookServiceCreateCopy:
+    async def test_create_copy_success(
+        self, book_service, mock_book_repo, mock_copy_repo
+    ):
+        mock_book_repo.exists.return_value = True
+        mock_copy_repo.create.return_value = BookCopy(id=1, book_id=1)
+
+        result = await book_service.create_copy(book_id=1)
+
+        assert result.id == 1
+        assert result.book_id == 1
+        mock_book_repo.exists.assert_called_once_with(1)
+        mock_copy_repo.create.assert_called_once()
+
+    async def test_create_copy_book_not_found(
+        self, book_service, mock_book_repo, mock_copy_repo
+    ):
+        mock_book_repo.exists.return_value = False
+
+        with pytest.raises(BookNotFound) as exc_info:
+            await book_service.create_copy(book_id=999)
+
+        assert exc_info.value.context["book_id"] == 999
+        mock_copy_repo.create.assert_not_called()
+
+
+class TestBookServiceListCopies:
+    async def test_list_copies_success(
+        self, book_service, mock_book_repo, mock_copy_repo
+    ):
+        mock_book_repo.exists.return_value = True
+        mock_copy_repo.list_by_book.return_value = [
+            BookCopy(id=1, book_id=1),
+            BookCopy(id=2, book_id=1),
+        ]
+
+        result = await book_service.list_copies(book_id=1)
+
+        assert len(result) == 2
+        mock_book_repo.exists.assert_called_once_with(1)
+        mock_copy_repo.list_by_book.assert_called_once_with(1)
+
+    async def test_list_copies_book_not_found(
+        self, book_service, mock_book_repo, mock_copy_repo
+    ):
+        mock_book_repo.exists.return_value = False
+
+        with pytest.raises(BookNotFound) as exc_info:
+            await book_service.list_copies(book_id=999)
+
+        assert exc_info.value.context["book_id"] == 999
+        mock_copy_repo.list_by_book.assert_not_called()

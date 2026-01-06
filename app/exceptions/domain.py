@@ -21,8 +21,12 @@ class BookNotFound(AppException):
     code: str = "book_not_found"
 
 
-class BookAlreadyLoaned(AppException):
-    code: str = "book_already_loaned"
+class BookAlreadyExists(AppException):
+    code: str = "book_already_exists"
+
+
+class NoCopiesAvailable(AppException):
+    code: str = "no_copies_available"
 
 
 class LoanNotFound(AppException):

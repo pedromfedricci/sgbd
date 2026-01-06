@@ -14,8 +14,9 @@ class Loan(Base):
     user_id: Mapped[int] = mapped_column(
         ForeignKey("users.id", ondelete="RESTRICT"), nullable=False
     )
-    book_id: Mapped[int] = mapped_column(
-        ForeignKey("books.id", ondelete="RESTRICT"), nullable=False
+
+    copy_id: Mapped[int] = mapped_column(
+        ForeignKey("book_copies.id", ondelete="RESTRICT"), nullable=False
     )
 
     due_to: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
@@ -35,12 +36,12 @@ class Loan(Base):
     __mapper_args__ = {"version_id_col": version}
 
     user = relationship("User", back_populates="loans", lazy="selectin")
-    book = relationship("Book", back_populates="loans", lazy="selectin")
+    copy = relationship("BookCopy", back_populates="loans", lazy="selectin")
 
     __table_args__ = (
         Index(
-            "uq_active_loan_per_book",
-            "book_id",
+            "uq_active_loan_per_copy",
+            "copy_id",
             unique=True,
             postgresql_where=text("returned_at IS NULL"),
         ),

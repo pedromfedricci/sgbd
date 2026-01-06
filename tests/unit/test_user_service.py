@@ -91,8 +91,8 @@ class TestUserServiceGetLoans:
             id=1, name="Test", email="test@email.com"
         )
         mock_user_repo.get_loans.return_value = [
-            Loan(id=1, user_id=1, book_id=1),
-            Loan(id=2, user_id=1, book_id=2),
+            Loan(id=1, user_id=1, copy_id=1),
+            Loan(id=2, user_id=1, copy_id=2),
         ]
 
         result = await user_service.get_loans(1)

@@ -49,7 +49,7 @@ HTTP 201
 
 
 # --------------------------------------------
-# Create book - duplicate title and author (allowed)
+# Create book - duplicate title and author (not allowed)
 # --------------------------------------------
 POST http://localhost:8000/books
 Content-Type: application/json
@@ -57,13 +57,11 @@ Content-Type: application/json
   "title": "Dom Casmurro",
   "author": "Machado de Assis"
 }
-HTTP 201
-[Captures]
-book_id_1: jsonpath "$.id"
+HTTP 409
 [Asserts]
-jsonpath "$.id" isInteger
-jsonpath "$.title" == "Dom Casmurro"
-jsonpath "$.author" == "Machado de Assis"
+jsonpath "$.code" == "book_already_exists"
+jsonpath "$.context.title" == "Dom Casmurro"
+jsonpath "$.context.author" == "Machado de Assis"
 
 
 # --------------------------------------------
@@ -151,6 +149,72 @@ jsonpath "$" count <= 2
 # List books - offset beyond results
 # --------------------------------------------
 GET http://localhost:8000/books?offset=10000&limit=10
+HTTP 200
+[Asserts]
+jsonpath "$" isCollection
+jsonpath "$" count == 0
+
+
+# ============================================
+# Book Copies API Tests
+# ============================================
+
+# --------------------------------------------
+# Create copy - success
+# --------------------------------------------
+POST http://localhost:8000/books/{{book_id_1}}/copies
+HTTP 201
+[Captures]
+copy_id: jsonpath "$.id"
+[Asserts]
+jsonpath "$.id" isInteger
+jsonpath "$.book_id" == {{book_id_1}}
+
+
+# --------------------------------------------
+# Create copy - book not found
+# --------------------------------------------
+POST http://localhost:8000/books/99999/copies
+HTTP 404
+[Asserts]
+jsonpath "$.code" == "book_not_found"
+jsonpath "$.context.book_id" == 99999
+
+
+# --------------------------------------------
+# List copies - success
+# --------------------------------------------
+GET http://localhost:8000/books/{{book_id_1}}/copies
+HTTP 200
+[Asserts]
+jsonpath "$" isCollection
+jsonpath "$" count >= 1
+jsonpath "$[0].book_id" == {{book_id_1}}
+
+
+# --------------------------------------------
+# List copies - book not found
+# --------------------------------------------
+GET http://localhost:8000/books/99999/copies
+HTTP 404
+[Asserts]
+jsonpath "$.code" == "book_not_found"
+
+
+# --------------------------------------------
+# List copies - empty (no copies yet)
+# --------------------------------------------
+POST http://localhost:8000/books
+Content-Type: application/json
+{
+  "title": "Livro Sem Cópias",
+  "author": "Autor Teste"
+}
+HTTP 201
+[Captures]
+book_no_copies_id: jsonpath "$.id"
+
+GET http://localhost:8000/books/{{book_no_copies_id}}/copies
 HTTP 200
 [Asserts]
 jsonpath "$" isCollection
