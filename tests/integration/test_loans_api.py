@@ -16,7 +16,11 @@ async def book(client):
         "/books",
         json={"title": "Loan Test Book", "author": "Test Author"},
     )
-    return response.json()
+    book = response.json()
+    # Create a copy for the book
+    copy_response = await client.post(f"/books/{book['id']}/copies")
+    book["copy_id"] = copy_response.json()["id"]
+    return book
 
 
 @pytest.fixture
@@ -27,7 +31,11 @@ async def books(client):
             "/books",
             json={"title": f"Loan Book {i}", "author": "Test Author"},
         )
-        result.append(response.json())
+        book = response.json()
+        # Create a copy for each book
+        copy_response = await client.post(f"/books/{book['id']}/copies")
+        book["copy_id"] = copy_response.json()["id"]
+        result.append(book)
     return result
 
 
@@ -41,7 +49,7 @@ class TestCreateLoan:
         assert response.status_code == 201
         data = response.json()
         assert data["user_id"] == user["id"]
-        assert data["book_id"] == book["id"]
+        assert data["copy_id"] == book["copy_id"]
         assert data["returned_at"] is None
         assert data["fine_cents"] == 0
         assert "due_to" in data
@@ -64,7 +72,7 @@ class TestCreateLoan:
         assert response.status_code == 404
         assert response.json()["code"] == "book_not_found"
 
-    async def test_create_loan_book_already_loaned(self, client, user, book):
+    async def test_create_loan_no_copies_available(self, client, user, book):
         await client.post(
             "/loans",
             json={"user_id": user["id"], "book_id": book["id"]},
@@ -76,7 +84,7 @@ class TestCreateLoan:
         )
 
         assert response.status_code == 409
-        assert response.json()["code"] == "book_already_loaned"
+        assert response.json()["code"] == "no_copies_available"
 
     async def test_create_loan_max_exceeded(self, client, user, books):
         # Create 3 loans (max allowed)

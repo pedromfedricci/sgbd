@@ -22,11 +22,8 @@ class TestCreateBook:
             json={"title": "Duplicate Book", "author": "Same Author"},
         )
 
-        assert response.status_code == 201
-        data = response.json()
-        assert data["title"] == "Duplicate Book"
-        assert data["author"] == "Same Author"
-        assert "id" in data
+        assert response.status_code == 409
+        assert response.json()["code"] == "book_already_exists"
 
     async def test_create_book_same_title_different_author(self, client):
         await client.post(

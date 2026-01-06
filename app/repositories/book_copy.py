@@ -28,7 +28,7 @@ class BookCopyRepository:
         return result.scalars().all()
 
     async def get_available_for_book(self, book_id: int) -> BookCopy | None:
-        active = select(Loan.copy_id).where(Loan.returned_at._is_(None))
+        active = select(Loan.copy_id).where(Loan.returned_at.is_(None))
         active_sub = active.scalar_subquery()
         stmt = (
             select(BookCopy)
